@@ -8,10 +8,10 @@ function [] = Place_Cell_Disruption_BK()
 %% Input Parameters
 rat = 'Testing';
 exp = 'Place-Cell-Disruption'; % Experiment name
-
-stim_proportion = 0.7;
 debug_mode = false;
 
+% Stimulation Parameters
+stim_proportion = 0.7;
 
 disp(['Current Rat: ' rat]);
 disp(['Stim Proportion: ' num2str(stim_proportion)]);
@@ -54,7 +54,7 @@ global performance_counter
 % Save Location
 [save_folder, filename, save_loc, ~, ~, waterlog_filepath] = CreateSavePaths(rat, exp);
 disp(['Save Location: ' save_loc]);
-fID = fopen(waterlog_filepath,'a');
+water_fID = fopen(waterlog_filepath,'a');
 
 % Set Timing and Alignment Parameters
 run_time = 240*60;    % Seconds
@@ -137,6 +137,10 @@ perf_vec_idx = 1;
 new_sensor_time = [];
 trial_num = 0;
 performance_counter = 1;
+
+% Write all settings to file
+disp('Saving settings to file');
+Save_PCD_Settings(save_folder, rat, exp, stim_proportion, run_time, srate, NIDAQ_sensor_chans, NIDAQ_solenoid_chans, NIDAQ_LEDs_chans, NIDAQ_mm_chans, pumpOpen);
 
 %% Initialize Figure for LED Status, Rat Position, and Water Performance
 % Set up window GUI for LED status and rat position update from motive.
@@ -232,7 +236,7 @@ t_zone = timer('TimerFcn', @(x,y)zone_detect(trackobj, ax, ht, ttl_zone, ndir_ve
 
 t_minute = timer('TimerFcn', @(x,y)minute_marker(), 'Period', 60, 'ExecutionMode', 'fixedRate'); 
 
-t_water = timer('TimerFcn',@(x,y)water_system(fID), 'Period', 1/srate, 'ExecutionMode', 'fixedRate');
+t_water = timer('TimerFcn',@(x,y)water_system(water_fID), 'Period', 1/srate, 'ExecutionMode', 'fixedRate');
 
 
 % Cleanup Function
