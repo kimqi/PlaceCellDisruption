@@ -9,7 +9,7 @@ function [] = Place_Cell_Disruption_BK()
 rat = 'Testing';
 exp = 'Place-Cell-Disruption'; % Experiment name
 
-stim_proportion = 0.7;
+stim_proportion = 0.8;
 debug_mode = false;
 
 
@@ -208,12 +208,17 @@ end_pos = pos(end,:);
 disp(end_pos);
 % end_pos = [-0.3754 0.2064 3.8861];                                                                % For debugging only
 
-% Calculate direction vector of track
-dir_vec = end_pos - start_pos;
-ndir_vec = dir_vec / norm(dir_vec);
-track_length = pdist2(end_pos, start_pos);                                                          % Calculate track length
+% Calculate angle of track for transformation to track coordinates
 center = mean([start_pos; end_pos]);                                                                % Find track center
-ttl_zone = [-stim_proportion, stim_proportion]*track_length/2;
+theta = atan2(end_pos(3)-start_pos(3), end_pos(1) - start_pos(1));                                  % Angle offset 
+track_length = pdist2(end_pos, start_pos);                                                          % Calculate track length
+
+% Calculate stimulation zone (takes stim zone and places it on the center of track)
+ttl_zone = [-stim_proportion, stim_proportion]*track_length/2;                                      
+
+% Code if track is aligned with Z-axis perfectly somehow
+track_zdist = end_pos(3) - start_pos(3);                                                            % Set track distance along z-axis
+ttl_zzone = [start_pos(3) + track_zdist/3, start_pos(3) + track_zdist*2/3];
 
 % Display zone start and end on console
 disp(['zone start = ' num2str(ttl_zone(1),'%0.2g')])
@@ -225,7 +230,7 @@ input('Ready to rock and roll. Hit enter when ready!','s');
 
 %% Start Experiment
 % Start timer to check at Sampling Rate(srate) Hz if rat is in the stim zone.
-t_zone = timer('TimerFcn', @(x,y)zone_detect(trackobj, ax, ht, ttl_zone, ndir_vec, center), ...
+t_zone = timer('TimerFcn', @(x,y)zone_detect(trackobj, ax, ht, ttl_zone, theta, center), ...
     'StartFcn', @(x,y)send_start(), ...
     'StopFcn', @(x,y)send_end(), ...
     'Period', 1/srate, 'ExecutionMode', 'fixedRate');
@@ -465,7 +470,7 @@ end
 
 
 %% Detect if in TTL Zone and Trigger
-function [] = zone_detect(c, ax, ht, ttl_zone, ndir_vec, center)
+function [] = zone_detect(c, ax, ht, ttl_zone, theta, center)
 
 global pos
 global pos_opti
@@ -481,7 +486,7 @@ global on_minutes
 
 delta_pos = capture_pos(c); % get position
 pos_curr = pos(end,:);
-pos_s = cart_to_track(pos_curr, ndir_vec, center);
+pos_s = cart_to_track(pos_curr, theta, center);
 pos_lin = [pos_lin; pos_s];
 
 % Turn TTL off if rat's position has not changed at all (most likely
@@ -619,11 +624,30 @@ end
 
 
 %% Convert cartesian position to track length
-function [s] = cart_to_track(pos_curr, ndir_vec, center)
+function [s] = cart_to_track(pos_curr, theta, center)
 % S = position on track
-v = pos_curr - center;
-s = dot(v, ndir_vec);
-% track_point = center + t * ndir_vec;
+x = pos_curr(1);
+y = pos_curr(2);
+z = pos_curr(3);
+xmid = center(1);
+ymid = center(2);
+zmid = center(3);
+
+% Calculate s two different ways
+s1 = (z - zmid)/sin(theta);
+s2 = (x - xmid)/cos(theta);
+
+% Make sure we aren't dividing by zero for calculations
+cos_lims = [-pi(), -3*pi()/4; -pi()/4, pi()/4; 3*pi()/4, pi()];
+sin_lims = [-3*pi()/4 -pi()/4; pi()/4 3*pi()/4];
+
+% Use the calculation that doesn't have a divide by zero.
+if any(cos_lims(:,1) <= theta & theta < cos_lims(:,2))
+    s = s2;
+elseif any(sin_lims(:,1) <= theta & theta < sin_lims(:,2))
+    s = s1;
+end
+
 end
 
 

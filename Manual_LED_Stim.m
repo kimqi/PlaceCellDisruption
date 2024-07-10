@@ -1,11 +1,9 @@
 %% Initiate variables
-rat = 'Mocha'; % rat name
+rat = 'Creampuff'; % rat name
 fprintf('Rat: %s \n', rat); % Print rat name to check
 
 % Experiment & Save location
 exp = 'Opto_Stim'; % Experiment name
-
-
 
 % Stimulation variables
 stim_loops = 10; % Number of stimulation loops (10 loops is default)
@@ -19,7 +17,7 @@ do_LEDs = DigitalOutput(NIDAQ_LEDs_chans);
 
 
 
-% %% Stim stuff
+%% Stim stuff
 r = rateControl(srate);
 for cur_loop = 1:stim_loops
     tic;
