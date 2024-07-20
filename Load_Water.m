@@ -15,4 +15,5 @@ disp('Successfully Initiated Digital Input: di_sensors.');
 do = DigitalOutput(NIDAQ_solenoid_chans);
 disp('Successfully Initiated Digital Output: do_solenoids.');
 
+% Run this part until u got some water
 do.toggleNI(valves, pumpOpen);

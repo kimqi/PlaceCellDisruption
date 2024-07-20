@@ -8,6 +8,9 @@ function [] = Place_Cell_Disruption_BK()
 %% Input Parameters
 rat = 'Testing';
 exp = 'Place-Cell-Disruption'; % Experiment name
+track = 'Sarthe';
+beh_data = '.txt';
+track_perf = true;
 debug_mode = false;
 
 % Stimulation Parameters
@@ -52,7 +55,9 @@ global trial_num
 global performance_counter
 
 % Save Location
-[save_folder, filename, save_loc, ~, ~, waterlog_filepath] = CreateSavePaths(rat, exp);
+[save_folder, ~, save_loc, ~, ~, waterlog_filepath] = CreateSavePaths(rat, exp, beh_data, track_perf);
+
+
 disp(['Save Location: ' save_loc]);
 water_fID = fopen(waterlog_filepath,'a');
 
@@ -162,11 +167,7 @@ hl = plot(pos_lin);
 hl(2) = plot(pos_lin,'r.');
 
 % Water Performance
-water_perf_fig = subplot(2,3,3);
-hold on;
-title('Water Performance');
-xlabel('Minutes from start')
-ylabel('Performance')
+% water_perf_fig = subplot(2,3,3);
 
 % X Position
 subplot(2,3,4); 
@@ -197,7 +198,12 @@ hlcarto(2).MarkerSize = 12;
 trackobj = natnet;
 trackobj.connect;
 
-% Get track ends
+% Define track parameters
+turns = 0;
+if track == 'Sarthe'
+    turns = 1;
+end
+
 % Starting position
 input('Put rigid body at start of the track. Hit enter when done','s');
 capture_pos(trackobj);
@@ -210,7 +216,15 @@ input('Put rigid body at end of the track. Hit enter when done','s');
 capture_pos(trackobj);
 end_pos = pos(end,:);
 disp(end_pos);
-% end_pos = [-0.3754 0.2064 3.8861];                                                                % For debugging only
+% end_pos = [-0.3754 0.2064 3.8861];  % For debugging only
+
+% Turns
+if turns > 0
+    input('Put rigid body corner. Hit enter when done','s');
+    capture_pos(trackobj);
+    turn_pos = pos(end,:);
+    disp(turn_pos);
+end
 
 % Calculate direction vector of track
 dir_vec = end_pos - start_pos;
@@ -237,7 +251,6 @@ t_zone = timer('TimerFcn', @(x,y)zone_detect(trackobj, ax, ht, ttl_zone, ndir_ve
 t_minute = timer('TimerFcn', @(x,y)minute_marker(), 'Period', 60, 'ExecutionMode', 'fixedRate'); 
 
 t_water = timer('TimerFcn',@(x,y)water_system(water_fID), 'Period', 1/srate, 'ExecutionMode', 'fixedRate');
-
 
 % Cleanup Function
 cleanup = onCleanup(@()myCleanupFun(rat, save_folder, hf, t_zone, t_minute, ax, ht));
@@ -363,7 +376,7 @@ function [] = water_system(fID)
         performance_counter = performance_counter + 1;
 
         % Write to file.
-        fprintf(fID,' %s %d %i \n', string(d,'dd-MMM-yyyy hh:mm:ss:SSS'), activeport, performance); %then write to file
+        fprintf(fID,' %s Trial: %i; Active Port: %d; Performance: %f \n', string(d,'dd-MMM-yyyy hh:mm:ss:SSS'), trial_num, activeport, performance); %then write to file
         lastPrintTime = datetime; lastPrintTime.Format = 'hh:mm:ss:SSS';
         
         % Print number of trials
@@ -638,7 +651,7 @@ function myCleanupFun(rat, save_folder, h, t_zone, t_minute, ax, ht)
     d = datetime;
 
     % Save figure
-    saveas(h, fullfile(save_folder, [rat, '_', char(d,'dd-MMM-yyyy_hh.mm.ss.SSS') '_performance.fig']));
+    saveas(h, fullfile(save_folder, [rat, '_', char(d,'dd-MMM-yyyy_hh.mm.ss.SSS') '.fig']));
     
     % Cleanup timers and position variables
     trigger_off(ax, ht, nan);

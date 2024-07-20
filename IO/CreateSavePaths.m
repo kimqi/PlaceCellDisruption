@@ -1,43 +1,44 @@
-function [project_folder, project_filename, project_filepath, waterlog_folder, waterlog_filename, waterlog_filepath] = CreateSavePaths(rat,exp)
+function [folder, filename, filepath, water_folder, water_filename, water_path] = CreateSavePaths(rat, exp, format,track_perf)
 %% Create Save Paths and set save locations for current script.
 
 % Initialize parameters
 starttime = datetime;
+water_folder = '';
+water_filename = '';
+water_path = '';
 
 % Prompt user for save location of project
-project_folder = [uigetdir('E:\Brian\','Select Project Root Folder- Default is Brian') '\'  'Behavior\' rat];
+base_folder = [uigetdir('E:\Brian\Behavior','Select Animal Data Folder')];
+folder = [base_folder '\' exp];
 
-if ~exist(project_folder, 'dir')
-    mkdir(project_folder)
+if ~exist(folder, 'dir')
+    mkdir(folder)
 end
 
-% Matfile Save Location
-project_filename = [rat '_' exp '_' num2str(yyyymmdd(starttime)) '.mat'];
-project_filepath = fullfile(project_folder, project_filename);
+% Save file name
+filename = [rat '_' exp '_' num2str(yyyymmdd(starttime)) format];
+filepath = fullfile(folder, filename);
 file_num = 1;
+water_num = 1;
 
-while exist(project_filepath, 'dir')
-    project_filename = [rat '_' num2str(yyyymmdd(datetime)) '_' num2str(file_num) '.mat'];
+while exist(filepath,'file')
+    filename = [rat '_' num2str(yyyymmdd(datetime)) '_' num2str(file_num) format];
+    filepath = fullfile(folder, filename);
     file_num = file_num + 1;
-    project_filepath = fullfile(project_folder, project_filename);
-end
-disp(['Matfile Save Location: ' project_filepath]);
-
-% Water Performance Log Save File Location
-waterlog_folder = fullfile(project_folder, 'WaterPerformance');
-
-if ~exist(waterlog_folder, 'dir')
-    mkdir(waterlog_folder)
 end
 
-waterlog_filename = [rat '_' num2str(yyyymmdd(starttime)) '.txt'];
-waterlog_filepath = fullfile(project_folder, 'WaterPerformance', waterlog_filename);
-file_num = 1;
+if track_perf == true
+    water_folder = strcat([folder '\Water-Performance']);
+    if ~exist(water_folder, 'dir')
+        mkdir(water_folder)
+    end
+    water_filename = [rat '_' exp '_Water-Performance_' num2str(yyyymmdd(starttime)) format];
+    water_path = fullfile(water_folder, water_filename);
 
-while exist(waterlog_filepath, 'file')
-    waterlog_filename = [rat '_' num2str(yyyymmdd(datetime)) '_' num2str(file_num) '.txt'];
-    file_num = file_num + 1;
-    waterlog_filepath = fullfile(waterlog_folder, waterlog_filename);
+    while exist(water_path, 'file')
+        water_filename = [rat '_' exp '_Water-Performance_' num2str(yyyymmdd(starttime)) '_' num2str(water_num) format];
+        water_path = fullfile(water_folder, water_filename);
+        water_num = water_num + 1;
+    end
 end
-disp(['Water Performance Log Save Location: ' waterlog_filepath]);
 
