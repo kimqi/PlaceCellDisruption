@@ -1,0 +1,5 @@
+// Estimated duration of the artifacts
+// Stim 0 lasts 100 ms
+// Stim 1 lasts 510 ms
+0 10 # Opto Start
+1 10 # Opto Stop
